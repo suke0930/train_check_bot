@@ -1,15 +1,16 @@
 import axios, { Axios, AxiosResponse } from "axios";
 import { login, channelsend } from "./lib/discordlib";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { log } from "console";
 import { CacheType, Client, CommandInteractionOption } from "discord.js";
-import { parse } from 'node-html-parser';
+// import { parse } from 'node-html-parser';
 import { start } from "repl";
 import { get } from "http";
 import test, { run } from "node:test";
 import { setInterval } from "timers";
 import { send } from "process";
 import { kMaxLength } from "buffer";
+import { parse, stringify, toJSON, fromJSON } from 'flatted';
 let dblist: getlist[] = []//すべてのdb
 interface ReturnObj {
     sendmsg: (ID: string, text: string) => void;
@@ -73,37 +74,53 @@ function main() {
     class axioshander {
         static checkinternal2(url: string) {
             return new Promise<returnobj>((resolve, reject) => {
-                axios.get(url)
+                const dt = new Date();
+                // @ts-ignore
+                axios.get(url, { validateStatus: false })
                     // thenで成功した場合の処理
                     .then((elem) => {
                         // console.log("ステータスコード:", elem.data);
                         //  writeFileSync("./getdata.html", elem.data.toString());
-                        if (String(elem.data).indexOf("class=\"trouble\"") !== -1) {
-                            //トラブルの場合
-                            const returnobj = {
-                                code: 0,
-                                data: elem
+                        console.log(elem.status)
+                        console.log("ここを通ってる")
+                        if (elem.status === 200) {
+                            if (String(elem.data).indexOf("class=\"trouble\"") !== -1) {
+                                writeFileSync("./logs/troble/" + dt.getHours() + "h" + dt.getMinutes() + "m" + dt.getSeconds() + "+" + dt.getMonth() + "+" + dt.getDay() + ".html", String(elem.data))
+                                //トラブルの場合
+                                const returnobj = {
+                                    code: 0,
+                                    data: elem
+                                }
+                                resolve(returnobj);
+                            } else {
+
+                                writeFileSync("./logs/good/" + dt.getHours() + "h" + dt.getMinutes() + "m" + dt.getSeconds() + "+" + dt.getMonth() + "+" + dt.getDay() + ".html", String(elem.data))
+                                const returnobj = {
+                                    code: 1,
+                                    data: elem
+                                }
+                                resolve(returnobj);
                             }
-                            resolve(returnobj);
                         } else {
+                            // console.log(String(toJSON(elem)));
+                            writeFileSync("./logs/bad/" + dt.getHours() + "h" + dt.getMinutes() + "m" + dt.getSeconds() + "+" + dt.getMonth() + "+" + dt.getDay() + ".html", elem.data)
+                            console.log("err");
+                            console.log(toJSON(elem));
                             const returnobj = {
-                                code: 1,
+                                code: -1,
                                 data: elem
                             }
-                            resolve(returnobj);
+                            resolve(returnobj)
                         }
+
 
                     })
                     // catchでエラー時の挙動を定義
                     .catch(err => {
-                        if (err.statusCode === 404) {
-                            //console.log("404");
-                        } else {
-                            //console.log("err:", err.code);
-                        }
-                        console.log("err");
+                        console.log(err);
+                        console.log("timeout");
                         const returnobj = {
-                            code: -1,
+                            code: -2,
                             data: null
                         }
                         resolve(returnobj)
@@ -120,9 +137,16 @@ function main() {
                 axioshander.checkinternal2(url)
                     .then((data) => {
                         switch (data.code) {
+                            case -2:
+                                console.log("タイムアウト");
+                                const returndata2: returnobj2 = { aleat: true, stringdata: "タイムアウトしててくさ" }
+                                resolve(returndata2);
+                                break;
+
+
                             case -1:
                                 console.log("取得エラー");
-                                const returndata: returnobj2 = { aleat: true, stringdata: "yahooが裏切りやがった!!!!" }
+                                const returndata: returnobj2 = { aleat: true, stringdata: "yahooが裏切りやがった!!!!+status:" + data.data?.status }
                                 resolve(returndata);
                                 break;
 
@@ -146,8 +170,6 @@ function main() {
                                 resolve(returndata);
                                 break;
                             }
-
-
                         }
                     })
             })
@@ -189,9 +211,7 @@ function main() {
                             }
                         }
                     })
-
             })
-
         }, sec)
 
     }
@@ -289,11 +309,16 @@ function main() {
             }
         });
     }
+
     initdiscord()
         .then(async (cli) => {
             //正常動作確定ルート
             const serverid = cli.Client.guilds.cache.map(g => g.id);
             // const list: getlist[] = JSON.parse(readFileSync("./testurl.json").toString())//debug
+            if (!existsSync("./logs")) mkdirSync("./logs");
+            if (!existsSync("./logs/good")) mkdirSync("./logs/good");
+            if (!existsSync("./logs/bad")) mkdirSync("./logs/bad");
+            if (!existsSync("./logs/troble")) mkdirSync("./logs/troble");
             dbhandler.reload();
             console.log(serverid);
             slashhandler(cli.Client);
@@ -320,7 +345,7 @@ function main() {
                 }
             ], cli, serverid);
 
-            scanentry([], 10000, cli)//応急処置
+            scanentry([], 30000, cli)//応急処置
 
         })
         .catch((err: string) => {
