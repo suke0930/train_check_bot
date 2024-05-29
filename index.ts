@@ -344,8 +344,8 @@ function main() {
                     description: "あたらしい路線を登録します"
                 }
             ], cli, serverid);
-
-            scanentry([], 30000, cli)//応急処置
+            //
+            scanentry([], 60000, cli)//応急処置
 
         })
         .catch((err: string) => {
