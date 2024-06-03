@@ -153,10 +153,11 @@ function main() {
                             case 0: {
                                 console.log("トラブル");
                                 function gettextcontents(data: returnobj) {
-                                    const startpath = String(data.data?.data).indexOf("class=\"trouble\"");
+                                    const startpath = String(data.data?.data).indexOf("trouble");
                                     const endpath = String(data.data?.data).slice(startpath).indexOf("</p>");
                                     const raw1st = String(data.data?.data).slice(startpath).slice(0, endpath);
                                     const raw2st = raw1st.slice(raw1st.indexOf("<p>") + 3);
+
                                     return (raw2st);
                                 }
                                 const rawdata = gettextcontents(data)
@@ -345,7 +346,7 @@ function main() {
                 }
             ], cli, serverid);
             //
-            scanentry([], 60000, cli)//応急処置
+            scanentry([], 5000, cli)//応急処置
 
         })
         .catch((err: string) => {
