@@ -346,7 +346,7 @@ function main() {
                 }
             ], cli, serverid);
             //
-            scanentry([], 5000, cli)//応急処置
+            scanentry([], 60000, cli)//応急処置
 
         })
         .catch((err: string) => {
