@@ -84,7 +84,7 @@ function main() {
                         console.log(elem.status)
                         console.log("ここを通ってる")
                         if (elem.status === 200) {
-                            if (String(elem.data).indexOf("class=\"trouble\"") !== -1) {
+                            if (String(elem.data).indexOf("trouble") !== -1 || String(elem.data).indexOf("suspend") !== -1) {
                                 writeFileSync("./logs/troble/" + dt.getHours() + "h" + dt.getMinutes() + "m" + dt.getSeconds() + "+" + dt.getMonth() + "+" + dt.getDay() + ".html", String(elem.data))
                                 //トラブルの場合
                                 const returnobj = {
