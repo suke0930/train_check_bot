@@ -11,6 +11,8 @@ import { setInterval } from "timers";
 import { send } from "process";
 import { kMaxLength } from "buffer";
 import { parse, stringify, toJSON, fromJSON } from 'flatted';
+import { text } from "stream/consumers";
+let mastercli: ReturnObj3 | null = null;
 let dblist: getlist[] = []//すべてのdb
 interface ReturnObj {
     sendmsg: (ID: string, text: string) => void;
@@ -308,6 +310,42 @@ function main() {
                 }
 
             }
+            if (interaction.commandName === 'anounse') {
+
+                //当たり
+                const channelid = interaction.channelId;
+                const valuemsg = interaction.options.data[0].value;
+                //    const reply = await dbhandler.addchannel(channelid, addvalue);
+
+                async function sendannounse(msg: string) {
+                    return new Promise<string>((resolve) => {
+                        function sendmsg(elem: getlist, cli: ReturnObj, text: string) {
+
+                            elem.channel.map(id => {
+                                cli.sendmsg(id, text)
+                            })
+
+                        }
+                        if (mastercli !== null) {
+                            dblist.map((elem) => {
+                                if (mastercli) {
+                                    sendmsg(elem, mastercli, msg)
+                                }
+                            });
+                            resolve("おｋ！")
+                        } else {
+                            resolve("ダメだこれwwww");
+                        }
+                    })
+                };
+                if (typeof (valuemsg) === "string") {
+                    await interaction.reply(await sendannounse(valuemsg));
+                } else {
+                    await interaction.reply("何考えてんだおめぇ...");
+                }
+                // await interaction.reply("おk!");
+
+            }
         });
     }
 
@@ -343,9 +381,21 @@ function main() {
                 {
                     name: "addway",
                     description: "あたらしい路線を登録します"
-                }
+                },
+                {
+                    name: "anounse",
+                    description: "すべてのチャンネルにアナウンスを流します",
+                    options: [{
+                        type: 3,
+                        name: "input",
+                        description: "流したいメッセージ",
+                        required: true
+                    }],
+
+                },
             ], cli, serverid);
             //
+            mastercli = cli;
             scanentry([], 60000, cli)//応急処置
 
         })
